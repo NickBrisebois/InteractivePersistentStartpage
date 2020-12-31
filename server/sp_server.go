@@ -3,11 +3,12 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
-	"net/http"
 
-	"github.com/NickBrisebois/InteractivePersistentStartpage/config"
-	"github.com/NickBrisebois/InteractivePersistentStartpage/handlers"
+	log "github.com/sirupsen/logrus"
+
+	"github.com/NickBrisebois/InteractivePersistentStartpage/server/config"
+	"github.com/NickBrisebois/InteractivePersistentStartpage/server/db"
+	"github.com/NickBrisebois/InteractivePersistentStartpage/server/handlers"
 	"github.com/gin-gonic/gin"
 )
 
@@ -15,35 +16,49 @@ var version string
 var gitCommit string
 var buildTime string
 
-func serve(config *config.Config) {
-	router := gin.Default()
+// initialize the api handlers
+func initializeHandlers(config *config.Config) error {
+	db, err := db.NewDatabase(config)
+	if err != nil {
+		return err
+	}
 
 	handlers.SetConfig(config)
+	handlers.SetDatabase(db)
+	return nil
+}
 
-	api := router.Group(config.Server.APIPrefix)
-	api.GET("/links", handlers.LinksHandler)
-
-	server := &http.Server{
-		Addr:    config.Server.Address,
-		Handler: router,
+func serve(config *config.Config) {
+	// Enable gin release mode if debug mode is turned off
+	if !config.Debug {
+		gin.SetMode(gin.ReleaseMode)
 	}
 
-	log.Println("Starting Startpage API server")
-	if err := server.ListenAndServe(); err != nil {
-		log.Fatal("Error starting Startpage API Server: " + err.Error())
-	}
+	router := gin.Default()
+
+	initializeHandlers(config)
+
+	// Setup API routes
+	handlers.ConfigureLinkRoutes(router)
+
+	log.Info("Starting Startpage API server.")
+	router.Run(config.Address)
 }
 
 func main() {
 	configPath := flag.String("config", "./config.toml", "Path to config.toml file")
 	versionFlag := flag.Bool("v", false, "Show version info")
+	logLevel := flag.String("loglevel", "debug", "verbosity of logging")
 	flag.Parse()
 
 	if *versionFlag {
 		fmt.Println("Version: " + version)
 		fmt.Println("Commit: " + gitCommit)
 		fmt.Println("Built: " + buildTime)
+		return
 	}
+
+	setLogLevel(*logLevel)
 
 	if serverConfig, err := config.LoadConfig(*configPath); err != nil {
 		log.Fatal("Config loading error: " + err.Error())

@@ -46,7 +46,7 @@ func NewDatabase(config *config.Config) (*Database, error) {
 func createLinksTable(db *sql.DB) error {
 	linksTable := `
 	CREATE TABLE IF NOT EXISTS links (
-		ID TEXT NOT NULL PRIMARY KEY,
+		ID INTEGER NOT NULL PRIMARY KEY,
 		Name TEXT,
 		URL TEXT
 	);
@@ -56,5 +56,16 @@ func createLinksTable(db *sql.DB) error {
 		return err
 	}
 
+	return nil
+}
+
+func (db *Database) DBAddLink(name string, url string) error {
+	addStmt, err := db.DB.Prepare("INSERT INTO links (Name, URL) VALUES (?, ?)")
+
+	if err != nil {
+		return err
+	}
+
+	addStmt.Exec(name, url)
 	return nil
 }

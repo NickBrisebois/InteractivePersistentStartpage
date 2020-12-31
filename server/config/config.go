@@ -6,8 +6,10 @@ import (
 
 // Config contains server configuration data loaded in from a toml file
 type Config struct {
-	DBPath   string `toml:"db_path"`
-	APIRoute string `toml:"api_route"`
+	DBPath    string `toml:"db_path"`
+	APIPrefix string `toml:"api_prefix"`
+	Address   string `toml:"address"`
+	Debug     bool   `toml:"debug"`
 }
 
 // LoadConfig loads toml file into Config struct object
