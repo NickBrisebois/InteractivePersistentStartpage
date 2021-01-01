@@ -59,6 +59,7 @@ func createLinksTable(db *sql.DB) error {
 	return nil
 }
 
+// DBAddLink handles adding new links to the SQlite3 db
 func (db *Database) DBAddLink(name string, url string) error {
 	addStmt, err := db.DB.Prepare("INSERT INTO links (Name, URL) VALUES (?, ?)")
 
@@ -67,5 +68,17 @@ func (db *Database) DBAddLink(name string, url string) error {
 	}
 
 	addStmt.Exec(name, url)
+	return nil
+}
+
+// DBDelLink handles deleting links from the SQLite3 db
+func (db *Database) DBDelLink(id int) error {
+	delStmt, err := db.DB.Prepare("DELETE FROM links WHERE id=?")
+
+	if err != nil {
+		return err
+	}
+
+	delStmt.Exec(id)
 	return nil
 }

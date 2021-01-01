@@ -1,4 +1,0 @@
-db_path = "data.sqlite3"
-api_prefix = "/api"
-address = "localhost:8000"
-debug = true
